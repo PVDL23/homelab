@@ -1,0 +1,25 @@
+[Unit]
+Description=PostgreSQL container
+
+[Container]
+AutoUpdate=registry
+ContainerName=postgres
+EnvironmentFile=postgres.env
+HealthCmd=pg_isready -U postgres -d postgres
+HealthInterval=300s
+HealthOnFailure=kill
+HealthRetries=3
+HealthTimeout=3s
+Image=docker.io/library/postgis/postgis:17-3.5-alpine
+LogDriver=k8s-file
+LogOpt=max-size=1m
+LogOpt=max-file=1
+Notify=healthy
+Pod=database.pod
+Pull=newer
+StartWithPod=true
+Volume=postgres-data.volume:/var/lib/postgresql/data/:rw,Z
+
+[Service]
+Restart=always
+TimeoutStartSec=900

@@ -1,0 +1,8 @@
+# services.network
+[Unit]
+After=network-online.target
+Wants=network-online.target
+
+[Network]
+Gateway=192.178.23.1
+Subnet=192.178.23.0/24
