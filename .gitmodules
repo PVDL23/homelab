@@ -1,0 +1,3 @@
+[submodule "podman-quadlets"]
+	path = podman-quadlets
+	url = https://github.com/PVDL23/podman-quadlets.git
