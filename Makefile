@@ -1,14 +1,21 @@
-init-proxmox:
-	cd terraform/proxmox && terraform init
+help:
+	@echo "Terraform:"
+	@echo "  make init-<env>    # Initialize (env: proxmox, docker)"
+	@echo "  make plan-<env>    # Plan and save to planout"
+	@echo "  make apply-<env>   # Apply saved plan"
+	@echo ""
+	@echo "Ansible:"
+	@echo "  make install-docker # Run install-docker playbook"
 
-plan-proxmox:
-	cd terraform/proxmox && terraform plan --out=planout
+init-%:
+	cd terraform/$* && terraform init
 
-apply-proxmox:
-	cd terraform/proxmox && terraform apply planout
+plan-%:
+	cd terraform/$* && terraform plan --out=planout
 
+apply-%:
+	cd terraform/$* && terraform apply planout
 
-
-# ansible 
+# ansible
 install-docker:
 	cd ansible && ansible-playbook playbooks/install-docker.yml
