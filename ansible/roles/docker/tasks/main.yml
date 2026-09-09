@@ -1,0 +1,43 @@
+- name: Install Docker on RedHat-family hosts
+  ansible.builtin.include_tasks: redhat.yml
+  when: ansible_facts["os_family"] == 'RedHat'
+
+- name: Install Docker on Debian-family hosts
+  ansible.builtin.include_tasks: debian.yml
+  when: ansible_facts["os_family"] == 'Debian'
+
+- name: Fail for unsupported distributions
+  ansible.builtin.fail:
+    msg: >-
+      Unsupported OS family '{{ ansible_facts["os_family"] }}'.
+      Add Docker installation tasks for this distro family under roles/docker/tasks.
+  when: ansible_facts["os_family"] not in ['RedHat', 'Debian']
+
+- name: Enable and start Docker
+  ansible.builtin.service:
+    name: "docker"
+    enabled: true
+    state: started
+
+- name: Add requested users to the docker group
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups: docker
+    append: true
+  loop:
+    - "{{ ansible_user | default('') }}"
+
+- name: Generate Docker bash completion script
+  ansible.builtin.command: docker completion bash
+  register: docker_bash_completion
+  changed_when: false
+  when: docker_enable_bash_completion
+
+- name: Install Docker bash completion script
+  ansible.builtin.copy:
+    dest: "/etc/bash_completion.d/docker"
+    owner: root
+    group: root
+    mode: "0644"
+    content: "{{ docker_bash_completion.stdout }}\n"
+  when: docker_enable_bash_completion

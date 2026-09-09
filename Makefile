@@ -6,3 +6,9 @@ plan-proxmox:
 
 apply-proxmox:
 	cd terraform/proxmox && terraform apply planout
+
+
+
+# ansible 
+install-docker:
+	cd ansible && ansible-playbook playbooks/install-docker.yml
