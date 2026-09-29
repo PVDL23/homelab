@@ -49,3 +49,8 @@ planout
 
 # vault
 vault-init.json
+
+# certs
+*.pem
+*.csr
+*.crt
