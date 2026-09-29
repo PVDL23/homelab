@@ -1,0 +1,60 @@
+---
+- name: Install Python cryptography dependency
+  ansible.builtin.package:
+    name: "{{ selfsigned_certificate_python_package | default('python3-cryptography') }}"
+    state: present
+
+- name: Validate self-signed certificate settings
+  ansible.builtin.assert:
+    that:
+      - selfsigned_certificate is mapping
+      - selfsigned_certificate.certificate_path is defined
+      - selfsigned_certificate.private_key_path is defined
+      - selfsigned_certificate.common_name is defined
+      - selfsigned_certificate.subject_alt_name is defined
+    fail_msg: >-
+      Set selfsigned_certificate with certificate_path, private_key_path,
+      common_name, and subject_alt_name in the playbook.
+
+- name: Create certificate directories
+  ansible.builtin.file:
+    path: "{{ item | dirname }}"
+    state: directory
+    owner: "{{ selfsigned_certificate.owner | default(omit) }}"
+    group: "{{ selfsigned_certificate.group | default(omit) }}"
+    mode: "{{ selfsigned_certificate.directory_mode | default('0750') }}"
+  loop:
+    - "{{ selfsigned_certificate.certificate_path }}"
+    - "{{ selfsigned_certificate.private_key_path }}"
+
+- name: Generate certificate private key
+  community.crypto.openssl_privatekey:
+    path: "{{ selfsigned_certificate.private_key_path }}"
+    type: RSA
+    size: "{{ selfsigned_certificate.key_size | default(3072) }}"
+    owner: "{{ selfsigned_certificate.owner | default(omit) }}"
+    group: "{{ selfsigned_certificate.group | default(omit) }}"
+    mode: "{{ selfsigned_certificate.private_key_mode | default('0600') }}"
+  notify: "{{ selfsigned_certificate_handler | default([]) }}"
+
+- name: Create certificate signing request
+  community.crypto.openssl_csr_pipe:
+    privatekey_path: "{{ selfsigned_certificate.private_key_path }}"
+    common_name: "{{ selfsigned_certificate.common_name }}"
+    subject_alt_name: "{{ selfsigned_certificate.subject_alt_name }}"
+    extended_key_usage:
+      - serverAuth
+  register: selfsigned_csr_result
+  changed_when: false
+
+- name: Generate self-signed certificate
+  community.crypto.x509_certificate:
+    path: "{{ selfsigned_certificate.certificate_path }}"
+    csr_content: "{{ selfsigned_csr_result.csr }}"
+    privatekey_path: "{{ selfsigned_certificate.private_key_path }}"
+    provider: selfsigned
+    selfsigned_not_after: "+{{ selfsigned_certificate.validity_days | default(365) }}d"
+    owner: "{{ selfsigned_certificate.owner | default(omit) }}"
+    group: "{{ selfsigned_certificate.group | default(omit) }}"
+    mode: "{{ selfsigned_certificate.certificate_mode | default('0644') }}"
+  notify: "{{ selfsigned_certificate_handler | default([]) }}"

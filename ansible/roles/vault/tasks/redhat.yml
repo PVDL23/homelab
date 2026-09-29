@@ -1,0 +1,20 @@
+---
+- name: Install DNF plugin support
+  ansible.builtin.dnf:
+    name: dnf-plugins-core
+    state: present
+
+- name: Add HashiCorp RPM repository
+  ansible.builtin.yum_repository:
+    name: hashicorp
+    description: HashiCorp Stable
+    baseurl: https://rpm.releases.hashicorp.com/RHEL/$releasever/$basearch/stable
+    gpgkey: https://rpm.releases.hashicorp.com/gpg
+    gpgcheck: true
+    enabled: true
+
+- name: Install Vault on RedHat-family hosts
+  ansible.builtin.dnf:
+    name: vault
+    state: present
+  notify: restart vault

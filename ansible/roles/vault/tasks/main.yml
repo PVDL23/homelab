@@ -1,0 +1,63 @@
+---
+- name: Check whether cloud-init is installed
+  ansible.builtin.stat:
+    path: /usr/bin/cloud-init
+  register: vault_cloud_init
+
+- name: Wait for cloud-init
+  ansible.builtin.command: cloud-init status --wait --long
+  changed_when: false
+  failed_when: false
+  when: vault_cloud_init.stat.exists
+
+- name: Install Vault on RedHat-family hosts
+  ansible.builtin.include_tasks: redhat.yml
+  when: ansible_facts["os_family"] == 'RedHat'
+
+- name: Install Vault on Debian-family hosts
+  ansible.builtin.include_tasks: debian.yml
+  when: ansible_facts["os_family"] == 'Debian'
+
+- name: Fail for unsupported distributions
+  ansible.builtin.fail:
+    msg: >-
+      Unsupported OS family '{{ ansible_facts["os_family"] }}'.
+      Add Vault installation tasks for this distro family under roles/vault/tasks.
+  when: ansible_facts["os_family"] not in ['RedHat', 'Debian']
+
+- name: Create necessary directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: vault
+    group: vault
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: "/opt/vault/data", mode: "0700" }
+    - { path: "/opt/vault/plugins", mode: "0700" }
+    - { path: "/opt/vault/plugins/tmp", mode: "0700" }
+    - { path: "/var/log/vault", mode: "0750" }
+    - { path: "/etc/vault/tls", mode: "0750" }
+
+- name: Generate Vault TLS certificate
+  ansible.builtin.include_role:
+    name: selfsigned_certificate
+  vars:
+    selfsigned_certificate: "{{ vault_tls_certificate }}"
+    selfsigned_certificate_handler: restart vault
+
+- name: Deploy Vault configuration
+  ansible.builtin.template:
+    src: vault.hcl.j2
+    dest: /etc/vault.d/vault.hcl
+    owner: vault
+    group: vault
+    mode: "0640"
+  notify: restart vault
+
+- name: Enable and start Vault
+  ansible.builtin.systemd:
+    name: vault
+    daemon_reload: true
+    enabled: true
+    state: started

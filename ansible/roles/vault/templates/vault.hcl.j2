@@ -1,0 +1,31 @@
+ui = true
+disable_mlock = true
+
+# --- Configure the non-loopback interface ---
+api_addr     = "https://{{ ansible_host }}:8200"
+cluster_addr = "https://{{ ansible_host }}:8201"
+cluster_name = "prod-vault"
+
+# --- Plugin configuration ---
+plugin_directory = "/opt/vault/plugins"
+plugin_tmpdir    = "/vault/plugins/tmp"
+
+storage "raft" {
+  path    = "/opt/vault/data"
+  node_id = "vault-01"
+}
+
+listener "tcp" {
+  address       = "[::]:8200"
+  tls_cert_file = "{{ vault_tls_certificate.certificate_path }}"
+  tls_key_file  = "{{ vault_tls_certificate.private_key_path }}"
+}
+
+
+
+
+
+telemetry {
+  prometheus_retention_time = "30s"
+  disable_hostname          = true
+}

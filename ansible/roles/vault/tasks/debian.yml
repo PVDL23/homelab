@@ -1,0 +1,29 @@
+---
+- name: Install APT prerequisites for HashiCorp repository
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - gnupg
+    state: present
+    update_cache: true
+
+- name: Add HashiCorp signing key
+  ansible.builtin.apt_key:
+    url: https://apt.releases.hashicorp.com/gpg
+    state: present
+
+- name: Add HashiCorp APT repository
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}]
+      https://apt.releases.hashicorp.com {{ ansible_distribution_release | lower }} main
+    filename: hashicorp
+    state: present
+    update_cache: true
+
+- name: Install Vault on Debian-family hosts
+  ansible.builtin.apt:
+    name: vault
+    state: present
+    update_cache: true
+  notify: restart vault

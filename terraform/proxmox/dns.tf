@@ -4,6 +4,10 @@ locals {
       name = "docker.homelab.lan"
       ip   = "${module.alma_vms["docker-01"].ip_address}"
     },
+    {
+      name = "vault.homelab.lan"
+      ip   = "${module.alma_vms["vault-01"].ip_address}"
+    }
   ]
 }
 

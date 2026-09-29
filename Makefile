@@ -19,3 +19,6 @@ apply-%:
 # ansible
 install-docker:
 	cd ansible && ansible-playbook playbooks/install-docker.yml
+
+install-vault:
+	cd ansible && ansible-playbook playbooks/install-vault.yml
