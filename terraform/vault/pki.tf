@@ -24,9 +24,9 @@ resource "vault_pki_secret_backend_root_cert" "root_2026" {
   issuer_name = "root-2026"
 }
 
-output "vault_pki_secret_backend_root_cert_root_2026" {
-  value = vault_pki_secret_backend_root_cert.root_2026.certificate
-}
+# output "vault_pki_secret_backend_root_cert_root_2026" {
+#   value = vault_pki_secret_backend_root_cert.root_2026.certificate
+# }
 
 resource "local_sensitive_file" "root_2026_cert" {
   content  = vault_pki_secret_backend_root_cert.root_2026.certificate
@@ -78,7 +78,7 @@ resource "vault_mount" "pki_int" {
 # 2.3 - generate intermediate and save csr
 # vault write -format=json pki_int/intermediate/generate/internal \
 #      common_name="homelab.lan Intermediate Authority" \
-#      issuer_name="example-dot-com-intermediate" \
+#      issuer_name="homelab-dot-lan-intermediate" \
 #      | jq -r '.data.csr' > pki_intermediate.csr
 
 resource "vault_pki_secret_backend_intermediate_cert_request" "csr-request" {
@@ -125,13 +125,13 @@ resource "vault_pki_secret_backend_intermediate_set_signed" "intermediate" {
 resource "vault_pki_secret_backend_issuer" "intermediate" {
   backend     = vault_mount.pki_int.path
   issuer_ref  = vault_pki_secret_backend_intermediate_set_signed.intermediate.imported_issuers[0]
-  issuer_name = "example-dot-com-intermediate"
+  issuer_name = "homelab-dot-lan-intermediate"
 }
 
 # vault list pki_int_example/issuer
 
 # step 3
-# vault write pki_int/roles/example-dot-com \
+# vault write pki_int/roles/homelab-dot-lan \
 #      issuer_ref="$(vault read -field=default pki_int/config/issuers)" \
 #      allowed_domains="homelab.lan" \
 #      allow_subdomains=true \
@@ -140,7 +140,7 @@ resource "vault_pki_secret_backend_issuer" "intermediate" {
 resource "vault_pki_secret_backend_role" "intermediate_role" {
   backend          = vault_mount.pki_int.path
   issuer_ref       = vault_pki_secret_backend_issuer.intermediate.issuer_ref
-  name             = "example-dot-com"
+  name             = "homelab-dot-lan"
   ttl              = 86400
   max_ttl          = 2592000
   allow_ip_sans    = true
@@ -152,32 +152,48 @@ resource "vault_pki_secret_backend_role" "intermediate_role" {
 }
 
 #  step4: request new cert for URL
-#  vault write pki_int/issue/example-dot-com common_name="test.homelab.lan" ttl="24h"
+#  vault write pki_int/issue/homelab-dot-lan common_name="test.homelab.lan" ttl="24h"
 
-resource "vault_pki_secret_backend_cert" "example-dot-com" {
+resource "vault_pki_secret_backend_cert" "homelab-dot-lan" {
   issuer_ref  = vault_pki_secret_backend_issuer.intermediate.issuer_ref
   backend     = vault_pki_secret_backend_role.intermediate_role.backend
   name        = vault_pki_secret_backend_role.intermediate_role.name
-  common_name = "test.homelab.lan"
-  ttl         = 3600
+  common_name = "postgres.homelab.lan"
+  alt_names   = ["docker.homelab.lan"]
+  ttl         = 2592000
   revoke      = true
 }
 
-output "vault_pki_secret_backend_cert_example-dot-com_cert" {
-  value = vault_pki_secret_backend_cert.example-dot-com.certificate
+# output "vault_pki_secret_backend_cert_homelab-dot-lan_cert" {
+#   value = vault_pki_secret_backend_cert.homelab-dot-lan.certificate
+# }
+
+# output "vault_pki_secret_backend_cert_homelab-dot-lan_issuring_ca" {
+#   value = vault_pki_secret_backend_cert.homelab-dot-lan.issuing_ca
+# }
+
+# output "vault_pki_secret_backend_cert_homelab-dot-lan_serial_number" {
+#   value = vault_pki_secret_backend_cert.homelab-dot-lan.serial_number
+#   #   sensitive = true
+# }
+
+# output "vault_pki_secret_backend_cert_homelab-dot-lan_private_key_type" {
+#   value = vault_pki_secret_backend_cert.homelab-dot-lan.private_key_type
+# }
+
+resource "local_sensitive_file" "postgres_server_cert" {
+  content = join("\n", [
+    vault_pki_secret_backend_cert.homelab-dot-lan.certificate,
+    vault_pki_secret_backend_cert.homelab-dot-lan.ca_chain,
+  ])
+  filename        = "${path.module}/../docker/server.crt"
+  file_permission = "0644"
 }
 
-output "vault_pki_secret_backend_cert_example-dot-com_issuring_ca" {
-  value = vault_pki_secret_backend_cert.example-dot-com.issuing_ca
-}
-
-output "vault_pki_secret_backend_cert_example-dot-com_serial_number" {
-  value = vault_pki_secret_backend_cert.example-dot-com.serial_number
-  #   sensitive = true
-}
-
-output "vault_pki_secret_backend_cert_example-dot-com_private_key_type" {
-  value = vault_pki_secret_backend_cert.example-dot-com.private_key_type
+resource "local_sensitive_file" "postgres_server_key" {
+  content         = vault_pki_secret_backend_cert.homelab-dot-lan.private_key
+  filename        = "${path.module}/../docker/server.key"
+  file_permission = "0600"
 }
 
 # # step 5, expain the revoke = true
