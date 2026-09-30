@@ -11,18 +11,6 @@ variable "proxmox_node" {
   default     = "pve"
 }
 
-variable "proxmox_user" {
-  description = "Promox username for SSH"
-  type        = string
-  sensitive   = true
-}
-
-variable "proxmox_password" {
-  description = "Promox password for SSH"
-  type        = string
-  sensitive   = true
-}
-
 variable "storage_pool" {
   description = "Proxmox storage pool for VM disks"
   type        = string

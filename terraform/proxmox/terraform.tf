@@ -41,12 +41,6 @@ provider "proxmox" {
   endpoint = var.proxmox_endpoint
   insecure = true
   # PROXMOX_VE_API_TOKEN read from env: "user@realm!tokenid=secret"
-
-  ssh {
-    agent    = true
-    username = var.proxmox_user
-    password = var.proxmox_password
-  }
 }
 
 provider "unifi" {
