@@ -4,13 +4,10 @@ terraform {
   required_providers {
     proxmox = {
       source  = "bpg/proxmox"
-      version = "0.107.0"
+      version = "0.114.0"
     }
     unifi = {
       source = "ubiquiti-community/unifi"
-    }
-    talos = {
-      source = "siderolabs/talos"
     }
   }
 
@@ -47,6 +44,3 @@ provider "unifi" {
   api_url        = var.unifi_api_url
   allow_insecure = true
 }
-
-provider "talos" {}
-
