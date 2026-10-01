@@ -1,0 +1,15 @@
+machine:
+  install:
+    disk: ${install_disk}
+    image: ${installer_image}
+  network:
+    interfaces:
+      - interface: eth0
+        dhcp: false
+        addresses:
+          - ${ip_address}/24
+        routes:
+          - network: 0.0.0.0/0
+            gateway: ${gateway}
+    nameservers:
+      - ${gateway}
