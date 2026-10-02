@@ -1,0 +1,35 @@
+terraform {
+  required_version = ">= 1.15"
+
+  required_providers {
+    scaleway = {
+      source = "scaleway/scaleway"
+    }
+  }
+
+  backend "s3" {
+    bucket = "homelab-terraform-state"
+    key    = "scaleway/terraform.tfstate"
+    region = "fr-par"
+
+    endpoints = {
+      s3 = "https://s3.fr-par.scw.cloud"
+    }
+
+    encrypt = true
+
+    # Required for non-AWS S3 providers (Scaleway doesn't implement these AWS APIs)
+    skip_credentials_validation = true
+    skip_requesting_account_id  = true
+    skip_region_validation      = true
+    use_path_style              = true
+    use_lockfile                = true
+
+    # Credentials from env: AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
+    # (set these to your Scaleway access key / secret key in ~/.bashrc)
+  }
+}
+
+provider "scaleway" {
+  profile = "terraform"
+}

@@ -16,6 +16,15 @@ plan-%:
 apply-%:
 	cd terraform/$* && terraform apply planout
 
+init-scaleway:
+	cd terraform/cloud/scaleway && terraform init
+
+plan-scaleway:
+	cd terraform/cloud/scaleway && terraform plan --out=planout
+
+apply-scaleway:
+	cd terraform/cloud/scaleway && terraform apply planout
+
 # ansible
 install-docker:
 	cd ansible && ansible-playbook playbooks/install-docker.yml
