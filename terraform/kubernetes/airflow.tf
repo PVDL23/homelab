@@ -8,6 +8,12 @@ resource "helm_release" "airflow" {
 
   values = [
     yamlencode({
+      airflow = {
+        image = {
+          repository = "apache/airflow"
+          tag        = "3.3.2-python3.14"
+        }
+      }
       createUserJob = {
         useHelmHooks   = false
         applyCustomEnv = false
@@ -15,6 +21,14 @@ resource "helm_release" "airflow" {
       migrateDatabaseJob = {
         useHelmHooks   = false
         applyCustomEnv = false
+      }
+      config = {
+        core = {
+          load_examples = "False"
+        }
+        api = {
+          expose_config = "True"
+        }
       }
       apiServer = {
         service = {
