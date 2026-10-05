@@ -20,7 +20,7 @@ resource "vault_pki_secret_backend_root_cert" "root_2026" {
   backend     = vault_mount.pki.path
   type        = "internal"
   common_name = "homelab.lan"
-  ttl         = 315360000
+  ttl         = 315360000 # 10 years
   issuer_name = "root-2026"
 }
 
@@ -70,9 +70,15 @@ resource "vault_mount" "pki_int" {
   path        = "pki_int"
   type        = "pki"
   description = "This is an example intermediate PKI mount"
+  allowed_response_headers = [
+    "Last-Modified",
+    "Location",
+    "Replay-Nonce",
+    "Link"
+  ]
 
-  default_lease_ttl_seconds = 86400
-  max_lease_ttl_seconds     = 157680000
+  default_lease_ttl_seconds = 86400     # 1 day
+  max_lease_ttl_seconds     = 157680000 # 5 years
 }
 
 # 2.3 - generate intermediate and save csr
@@ -104,7 +110,7 @@ resource "vault_pki_secret_backend_root_sign_intermediate" "intermediate" {
   common_name = "new_intermediate"
   csr         = vault_pki_secret_backend_intermediate_cert_request.csr-request.csr
   format      = "pem_bundle"
-  ttl         = 15480000
+  ttl         = 15480000 # 5 years
   issuer_ref  = vault_pki_secret_backend_root_cert.root_2026.issuer_id
 }
 
@@ -331,3 +337,30 @@ resource "local_sensitive_file" "postgres_server_key" {
 # #   default                       = vault_pki_secret_backend_issuer.root_2024.issuer_id
 # #   default_follows_latest_issuer = true
 # # }
+
+
+# ACME
+resource "vault_pki_secret_backend_config_cluster" "pki_int_config_cluster" {
+  backend  = vault_mount.pki_int.path
+  path     = "http://127.0.0.1:8200/v1/pki_int"
+  aia_path = "http://127.0.0.1:8200/v1/pki_int"
+}
+
+resource "vault_pki_secret_backend_config_acme" "pki_int_config_acme" {
+  backend                  = vault_mount.pki_int.path
+  enabled                  = true
+  allowed_issuers          = ["*"]
+  allowed_roles            = ["*"]
+  allow_role_ext_key_usage = false
+  default_directory_policy = "sign-verbatim"
+  dns_resolver             = ""
+  eab_policy               = "not-required"
+}
+
+resource "vault_pki_secret_backend_config_auto_tidy" "pki_int" {
+  backend           = vault_mount.pki_int.path
+  enabled           = true
+  tidy_cert_store   = true
+  interval_duration = "1h"
+}
+
