@@ -342,8 +342,8 @@ resource "local_sensitive_file" "postgres_server_key" {
 # ACME
 resource "vault_pki_secret_backend_config_cluster" "pki_int_config_cluster" {
   backend  = vault_mount.pki_int.path
-  path     = "http://127.0.0.1:8200/v1/pki_int"
-  aia_path = "http://127.0.0.1:8200/v1/pki_int"
+  path     = "https://10.23.1.30:8200/v1/pki_int"
+  aia_path = "https://10.23.1.30:8200/v1/pki_int"
 }
 
 resource "vault_pki_secret_backend_config_acme" "pki_int_config_acme" {

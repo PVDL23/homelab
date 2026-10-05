@@ -4,17 +4,66 @@ resource "kubernetes_namespace_v1" "traefik" {
   }
 }
 
-resource "kubernetes_secret_v1" "homelab-tls" {
-  metadata {
-    name      = "homelab-tls"
-    namespace = kubernetes_namespace_v1.traefik.metadata[0].name
-  }
+resource "helm_release" "cert_manager" {
+  name             = "cert-manager"
+  repository       = "https://charts.jetstack.io"
+  chart            = "cert-manager"
+  namespace        = "cert-manager"
+  create_namespace = true
+  wait             = true
 
-  type = "Opaque"
+  set = [
+    {
+      name  = "crds.enabled"
+      value = "true"
+    },
+    {
+      name  = "config.gatewayAPI.enabled"
+      value = "true"
+    }
+  ]
+}
 
-  data = {
-    "tls.crt" = file("${path.module}/files/traefik.crt")
-    "tls.key" = file("${path.module}/files/traefik.key")
+resource "kubernetes_manifest" "vault_acme_issuer" {
+  depends_on = [
+    helm_release.cert_manager
+  ]
+
+  manifest = {
+    apiVersion = "cert-manager.io/v1"
+    kind       = "ClusterIssuer"
+
+    metadata = {
+      name = "vault-acme"
+    }
+
+    spec = {
+      acme = {
+        email    = "admin@homelab.lan"
+        server   = "https://10.23.1.30:8200/v1/pki_int/acme/directory"
+        caBundle = filebase64("${path.module}/files/vault-tls.crt")
+
+        privateKeySecretRef = {
+          name = "vault-acme-account-key"
+        }
+
+        solvers = [
+          {
+            http01 = {
+              gatewayHTTPRoute = {
+                parentRefs = [
+                  {
+                    name      = "traefik-gateway"
+                    namespace = "traefik"
+                    kind      = "Gateway"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
   }
 }
 
@@ -31,15 +80,6 @@ resource "helm_release" "traefik" {
         web = {
           port     = 80
           nodePort = 30080
-          http = {
-            redirections = {
-              entryPoint = {
-                to        = "websecure"
-                scheme    = "https"
-                permanent = true
-              }
-            }
-          }
         }
         websecure = {
           port     = 443
@@ -58,7 +98,6 @@ resource "helm_release" "traefik" {
           middlewares = [
             { name = "dashboard-auth" }
           ]
-
         }
       }
       extraObjects = [
@@ -99,6 +138,8 @@ resource "helm_release" "traefik" {
         }
       }
       gateway = {
+        enabled = true
+        name    = "traefik-gateway"
         listeners = {
           web = {
             port     = 80
@@ -138,6 +179,38 @@ resource "helm_release" "traefik" {
     })
   ]
 }
+
+resource "kubernetes_manifest" "homelab_certificate" {
+  depends_on = [
+    kubernetes_manifest.vault_acme_issuer,
+    helm_release.traefik
+  ]
+
+  manifest = {
+    apiVersion = "cert-manager.io/v1"
+    kind       = "Certificate"
+
+    metadata = {
+      name      = "homelab-tls"
+      namespace = "traefik"
+    }
+
+    spec = {
+      secretName = "homelab-tls"
+
+      issuerRef = {
+        name = "vault-acme"
+        kind = "ClusterIssuer"
+      }
+
+      dnsNames = [
+        "traefik.homelab.lan",
+        "airflow.homelab.lan"
+      ]
+    }
+  }
+}
+
 
 data "kubernetes_service_v1" "traefik" {
   metadata {

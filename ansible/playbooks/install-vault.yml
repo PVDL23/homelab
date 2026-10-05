@@ -15,3 +15,10 @@
 
   roles:
     - role: vault
+
+  tasks:
+    - name: Fetch Vault TLS certificate for cert-manager
+      ansible.builtin.fetch:
+        src: "{{ vault_tls_certificate.certificate_path }}"
+        dest: "{{ playbook_dir }}/../../terraform/kubernetes/files/vault-tls.crt"
+        flat: true
