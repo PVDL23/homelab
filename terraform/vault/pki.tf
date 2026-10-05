@@ -154,7 +154,7 @@ resource "vault_pki_secret_backend_role" "intermediate_role" {
 #  step4: request new cert for URL
 #  vault write pki_int/issue/homelab-dot-lan common_name="test.homelab.lan" ttl="24h"
 
-resource "vault_pki_secret_backend_cert" "homelab-dot-lan" {
+resource "vault_pki_secret_backend_cert" "postgres-dot-lan" {
   issuer_ref  = vault_pki_secret_backend_issuer.intermediate.issuer_ref
   backend     = vault_pki_secret_backend_role.intermediate_role.backend
   name        = vault_pki_secret_backend_role.intermediate_role.name
@@ -162,6 +162,41 @@ resource "vault_pki_secret_backend_cert" "homelab-dot-lan" {
   alt_names   = ["docker.homelab.lan"]
   ttl         = 2592000
   revoke      = true
+}
+
+resource "vault_pki_secret_backend_cert" "airflow-dot-lan" {
+  issuer_ref  = vault_pki_secret_backend_issuer.intermediate.issuer_ref
+  backend     = vault_pki_secret_backend_role.intermediate_role.backend
+  name        = vault_pki_secret_backend_role.intermediate_role.name
+  common_name = "airflow.homelab.lan"
+  ttl         = 2592000
+  revoke      = true
+}
+
+# Wildcard certificate for homelab.lan domain
+resource "vault_pki_secret_backend_cert" "wildcard-homelab-lan" {
+  issuer_ref  = vault_pki_secret_backend_issuer.intermediate.issuer_ref
+  backend     = vault_pki_secret_backend_role.intermediate_role.backend
+  name        = vault_pki_secret_backend_role.intermediate_role.name
+  common_name = "*.homelab.lan"
+  alt_names   = ["*.homelab.lan"]
+  ttl         = 2592000
+  revoke      = true
+}
+
+resource "local_sensitive_file" "wildcard_homelab_lan_cert" {
+  content = join("\n", [
+    vault_pki_secret_backend_cert.wildcard-homelab-lan.certificate,
+    vault_pki_secret_backend_cert.wildcard-homelab-lan.ca_chain,
+  ])
+  filename        = "${path.module}/../kubernetes/files/traefik.crt"
+  file_permission = "0644"
+}
+
+resource "local_sensitive_file" "wildcard_homelab_lan_key" {
+  content         = vault_pki_secret_backend_cert.wildcard-homelab-lan.private_key
+  filename        = "${path.module}/../kubernetes/files/traefik.key"
+  file_permission = "0600"
 }
 
 # output "vault_pki_secret_backend_cert_homelab-dot-lan_cert" {
@@ -183,15 +218,15 @@ resource "vault_pki_secret_backend_cert" "homelab-dot-lan" {
 
 resource "local_sensitive_file" "postgres_server_cert" {
   content = join("\n", [
-    vault_pki_secret_backend_cert.homelab-dot-lan.certificate,
-    vault_pki_secret_backend_cert.homelab-dot-lan.ca_chain,
+    vault_pki_secret_backend_cert.postgres-dot-lan.certificate,
+    vault_pki_secret_backend_cert.postgres-dot-lan.ca_chain,
   ])
   filename        = "${path.module}/../docker/server.crt"
   file_permission = "0644"
 }
 
 resource "local_sensitive_file" "postgres_server_key" {
-  content         = vault_pki_secret_backend_cert.homelab-dot-lan.private_key
+  content         = vault_pki_secret_backend_cert.postgres-dot-lan.private_key
   filename        = "${path.module}/../docker/server.key"
   file_permission = "0600"
 }

@@ -8,6 +8,9 @@ terraform {
     kubectl = {
       source = "gavinbunney/kubectl"
     }
+    unifi = {
+      source = "ubiquiti-community/unifi"
+    }
   }
 
   backend "s3" {
@@ -43,3 +46,9 @@ provider "helm" {
     config_path = "~/.kube/config"
   }
 }
+
+provider "unifi" {
+  api_url        = var.unifi_api_url
+  allow_insecure = true
+}
+
