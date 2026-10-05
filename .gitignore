@@ -54,6 +54,6 @@ vault-init.json
 *.pem
 *.csr
 *.crt
-terraform/docker/server.key
+*.key
 
 talosconfig
