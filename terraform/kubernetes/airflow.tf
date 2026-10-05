@@ -1,19 +1,48 @@
+resource "kubernetes_namespace_v1" "airflow" {
+  metadata {
+    name = "airflow"
+  }
+}
+
+
+resource "kubernetes_persistent_volume_claim_v1" "airflow" {
+  metadata {
+    name      = "apache-airflow-data"
+    namespace = kubernetes_namespace_v1.airflow.metadata[0].name
+  }
+  spec {
+    access_modes = ["ReadWriteMany"]
+    resources {
+      requests = {
+        storage = "10Gi"
+      }
+    }
+    storage_class_name = "nfs"
+  }
+}
+
 resource "helm_release" "airflow" {
-  name             = "apache-airflow"
-  repository       = "https://airflow.apache.org"
-  chart            = "airflow"
-  namespace        = "airflow"
-  create_namespace = true
-  wait             = true
+  name       = "apache-airflow"
+  repository = "https://airflow.apache.org"
+  chart      = "airflow"
+  namespace  = kubernetes_namespace_v1.airflow.metadata[0].name
+  wait       = true
+  depends_on = [kubernetes_persistent_volume_claim_v1.airflow]
 
   values = [
     yamlencode({
-      airflow = {
-        image = {
-          repository = "apache/airflow"
-          tag        = "3.3.2-python3.14"
+      images = {
+        airflow = {
+          repository = "rg.nl-ams.scw.cloud/data-engineering-cr/airflow-dags"
+          tag        = "251005"
+          pullPolicy = "IfNotPresent"
         }
       }
+
+      airflow = {
+        executor = "CeleryExecutor"
+      }
+
       createUserJob = {
         useHelmHooks   = false
         applyCustomEnv = false
@@ -22,14 +51,34 @@ resource "helm_release" "airflow" {
         useHelmHooks   = false
         applyCustomEnv = false
       }
+
       config = {
         core = {
           load_examples = "False"
+          dags_folder   = "/opt/airflow/dags"
         }
         api = {
           expose_config = "True"
         }
       }
+
+      workers = {
+        extraVolumeMounts = [
+          {
+            name      = "airflow-data"
+            mountPath = "/opt/airflow/data"
+          }
+        ]
+        extraVolumes = [
+          {
+            name = "airflow-data"
+            persistentVolumeClaim = {
+              claimName = "apache-airflow-data"
+            }
+          }
+        ]
+      }
+
       apiServer = {
         service = {
           type = "LoadBalancer"
@@ -42,9 +91,8 @@ resource "helm_release" "airflow" {
 data "kubernetes_service_v1" "airflow" {
   metadata {
     name      = "apache-airflow-api-server"
-    namespace = "airflow"
+    namespace = kubernetes_namespace_v1.airflow.metadata[0].name
   }
-
   depends_on = [helm_release.airflow]
 }
 
