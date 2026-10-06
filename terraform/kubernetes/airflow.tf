@@ -4,6 +4,18 @@ resource "kubernetes_namespace_v1" "airflow" {
   }
 }
 
+resource "kubernetes_secret_v1" "postgres" {
+  metadata {
+    name      = "airflow-postgres"
+    namespace = kubernetes_namespace_v1.airflow.metadata[0].name
+  }
+  type = "generic"
+  data_wo = {
+    connection = var.airflow_postgres
+  }
+  data_wo_revision = 1
+}
+
 
 resource "kubernetes_persistent_volume_claim_v1" "airflow" {
   metadata {
@@ -41,6 +53,19 @@ resource "helm_release" "airflow" {
 
       airflow = {
         executor = "CeleryExecutor"
+      }
+
+      postgresql = {
+        enabled = false
+      }
+
+      data = {
+        metadataSecretName = kubernetes_secret_v1.postgres.metadata[0].name
+      }
+
+      databaseCleanup = {
+        enabled       = true
+        retentionDays = 90
       }
 
       createUserJob = {
