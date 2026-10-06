@@ -18,3 +18,13 @@ resource "scaleway_object_bucket_acl" "nas_backup" {
   acl        = "private"
   project_id = scaleway_account_project.homelab.id
 }
+
+resource "scaleway_object_bucket" "inat_lake" {
+  name          = "inat-lake"
+  region        = "fr-par"
+  force_destroy = true
+  project_id    = scaleway_account_project.homelab.id
+  tags = {
+    managed-by = "terraform"
+  }
+}
