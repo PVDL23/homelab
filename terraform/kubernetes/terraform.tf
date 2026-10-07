@@ -11,6 +11,9 @@ terraform {
     unifi = {
       source = "ubiquiti-community/unifi"
     }
+    vault = {
+      source = "hashicorp/vault"
+    }
   }
 
   backend "s3" {
@@ -52,3 +55,6 @@ provider "unifi" {
   allow_insecure = true
 }
 
+provider "vault" {
+  skip_tls_verify = true
+}

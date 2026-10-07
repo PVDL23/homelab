@@ -4,13 +4,6 @@ variable "unifi_api_url" {
   # Credentials read from env: UNIFI_USERNAME and UNIFI_PASSWORD
 }
 
-variable "airflow_postgres" {
-  description = "Airflow Postgres connection string (e.g. postgresql://user:password@host:port/dbname)"
-  type        = string
-  ephemeral   = true
-  sensitive   = true
-}
-
 variable "traefik_username" {
   description = "Traefik dashboard username"
   type        = string

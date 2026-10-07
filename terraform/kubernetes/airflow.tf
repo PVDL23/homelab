@@ -4,6 +4,11 @@ resource "kubernetes_namespace_v1" "airflow" {
   }
 }
 
+ephemeral "vault_kv_secret_v2" "airflow_db" {
+  mount = "kvv2"
+  name  = "postgres-airflow"
+}
+
 resource "kubernetes_secret_v1" "postgres" {
   metadata {
     name      = "airflow-postgres"
@@ -11,7 +16,7 @@ resource "kubernetes_secret_v1" "postgres" {
   }
   type = "generic"
   data_wo = {
-    connection = var.airflow_postgres
+    connection = tostring(ephemeral.vault_kv_secret_v2.airflow_db.data.connection)
   }
   data_wo_revision = 1
 }
