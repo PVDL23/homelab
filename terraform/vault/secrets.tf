@@ -24,11 +24,11 @@ resource "vault_kv_secret_v2" "traefik" {
   name  = "traefik-dashboard"
   data_json_wo = jsonencode(
     {
-      traefik_username = var.traefik_username
-      traefik_password = var.traefik_password
+      username = var.traefik_username
+      password = var.traefik_password
     }
   )
-  data_json_wo_version = 1
+  data_json_wo_version = 2
   custom_metadata {
     max_versions = 5
   }

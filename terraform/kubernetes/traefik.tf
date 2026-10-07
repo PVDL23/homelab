@@ -4,6 +4,11 @@ resource "kubernetes_namespace_v1" "traefik" {
   }
 }
 
+data "vault_kv_secret_v2" "traefik" {
+  mount = "kvv2"
+  name  = "traefik-dashboard"
+}
+
 resource "helm_release" "traefik" {
   name       = "traefik"
   repository = "https://traefik.github.io/charts"
@@ -46,8 +51,8 @@ resource "helm_release" "traefik" {
           }
           type = "kubernetes.io/basic-auth"
           stringData = {
-            username = var.traefik_username
-            password = var.traefik_password
+            username = data.vault_kv_secret_v2.traefik.data.username
+            password = data.vault_kv_secret_v2.traefik.data.password
           }
         },
         {
