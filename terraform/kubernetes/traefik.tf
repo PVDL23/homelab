@@ -4,9 +4,22 @@ resource "kubernetes_namespace_v1" "traefik" {
   }
 }
 
-data "vault_kv_secret_v2" "traefik" {
+ephemeral "vault_kv_secret_v2" "traefik" {
   mount = "kvv2"
   name  = "traefik-dashboard"
+}
+
+resource "kubernetes_secret_v1" "traefik_auth" {
+  metadata {
+    name      = "dashboard-auth-secret"
+    namespace = kubernetes_namespace_v1.traefik.metadata[0].name
+  }
+  type = "kubernetes.io/basic-auth"
+  data_wo = {
+    username = ephemeral.vault_kv_secret_v2.traefik.data.username
+    password = ephemeral.vault_kv_secret_v2.traefik.data.password
+  }
+  data_wo_revision = 1
 }
 
 resource "helm_release" "traefik" {
@@ -44,18 +57,6 @@ resource "helm_release" "traefik" {
       }
       extraObjects = [
         {
-          apiVersion = "v1"
-          kind       = "Secret"
-          metadata = {
-            name = "dashboard-auth-secret"
-          }
-          type = "kubernetes.io/basic-auth"
-          stringData = {
-            username = data.vault_kv_secret_v2.traefik.data.username
-            password = data.vault_kv_secret_v2.traefik.data.password
-          }
-        },
-        {
           apiVersion = "traefik.io/v1alpha1"
           kind       = "Middleware"
           metadata = {
@@ -63,7 +64,7 @@ resource "helm_release" "traefik" {
           }
           spec = {
             basicAuth = {
-              secret = "dashboard-auth-secret"
+              secret = kubernetes_secret_v1.traefik_auth.metadata[0].name
             }
           }
         }
