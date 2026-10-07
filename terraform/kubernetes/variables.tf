@@ -7,7 +7,18 @@ variable "unifi_api_url" {
 variable "airflow_postgres" {
   description = "Airflow Postgres connection string (e.g. postgresql://user:password@host:port/dbname)"
   type        = string
-  default     = "postgresql://user:pass@host:5432/db"
   ephemeral   = true
+  sensitive   = true
+}
+
+variable "traefik_username" {
+  description = "Traefik dashboard username"
+  type        = string
+  sensitive   = true
+}
+
+variable "traefik_password" {
+  description = "Traefik dashboard password"
+  type        = string
   sensitive   = true
 }

@@ -46,8 +46,8 @@ resource "helm_release" "traefik" {
           }
           type = "kubernetes.io/basic-auth"
           stringData = {
-            username = "admin"
-            password = "admin"
+            username = var.traefik_username
+            password = var.traefik_password
           }
         },
         {
