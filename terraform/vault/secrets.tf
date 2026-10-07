@@ -18,3 +18,18 @@ resource "vault_kv_secret_v2" "postgres" {
     max_versions = 5
   }
 }
+
+resource "vault_kv_secret_v2" "traefik" {
+  mount = vault_mount.kvv2.path
+  name  = "traefik-dashboard"
+  data_json_wo = jsonencode(
+    {
+      traefik_username = var.traefik_username
+      traefik_password = var.traefik_password
+    }
+  )
+  data_json_wo_version = 1
+  custom_metadata {
+    max_versions = 5
+  }
+}

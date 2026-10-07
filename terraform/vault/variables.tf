@@ -4,3 +4,17 @@ variable "airflow_postgres" {
   ephemeral   = true
   sensitive   = true
 }
+
+variable "traefik_username" {
+  description = "Traefik dashboard username"
+  type        = string
+  ephemeral   = true
+  sensitive   = true
+}
+
+variable "traefik_password" {
+  description = "Traefik dashboard password"
+  type        = string
+  ephemeral   = true
+  sensitive   = true
+}
