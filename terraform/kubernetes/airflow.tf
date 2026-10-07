@@ -46,7 +46,7 @@ resource "helm_release" "airflow" {
       images = {
         airflow = {
           repository = "rg.nl-ams.scw.cloud/data-engineering-cr/airflow-dags"
-          tag        = "251005"
+          tag        = "251007-1"
           pullPolicy = "IfNotPresent"
         }
       }
