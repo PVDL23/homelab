@@ -9,7 +9,7 @@ ephemeral "vault_kv_secret_v2" "airflow_db" {
   name  = "postgres-airflow"
 }
 
-resource "kubernetes_secret_v1" "postgres" {
+resource "kubernetes_secret_v1" "airflow_db" {
   metadata {
     name      = "airflow-postgres"
     namespace = kubernetes_namespace_v1.airflow.metadata[0].name
@@ -65,7 +65,7 @@ resource "helm_release" "airflow" {
       }
 
       data = {
-        metadataSecretName = kubernetes_secret_v1.postgres.metadata[0].name
+        metadataSecretName = kubernetes_secret_v1.airflow_db.metadata[0].name
       }
 
       databaseCleanup = {
@@ -93,7 +93,7 @@ resource "helm_release" "airflow" {
       }
 
       defaultAirflowRepo = "apache/airflow"
-      defaultAirflowTag = "2.10.0"
+      defaultAirflowTag  = "2.10.0"
 
       web = {
         replicas = 1
