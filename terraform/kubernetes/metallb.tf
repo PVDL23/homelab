@@ -13,6 +13,46 @@ resource "helm_release" "metallb" {
   chart      = "metallb"
   namespace  = kubernetes_namespace_v1.metallb.metadata[0].name
   wait       = true
+
+  values = [yamlencode({
+    controller = {
+      resources = {
+        requests = {
+          cpu    = "100m"
+          memory = "128Mi"
+        }
+        limits = {
+          cpu    = "500m"
+          memory = "256Mi"
+        }
+      }
+    }
+    speaker = {
+      resources = {
+        requests = {
+          cpu    = "100m"
+          memory = "128Mi"
+        }
+        limits = {
+          cpu    = "200m"
+          memory = "256Mi"
+        }
+      }
+    }
+    frr = {
+      enabled = true
+      resources = {
+        requests = {
+          cpu    = "200m"
+          memory = "256Mi"
+        }
+        limits = {
+          cpu    = "500m"
+          memory = "512Mi"
+        }
+      }
+    }
+  })]
 }
 
 resource "kubernetes_manifest" "metallb_ip_pool" {

@@ -6,6 +6,19 @@ resource "helm_release" "cert_manager" {
   create_namespace = true
   wait             = true
 
+  values = [yamlencode({
+    resources = {
+      requests = {
+        cpu    = "100m"
+        memory = "128Mi"
+      }
+      limits = {
+        cpu    = "500m"
+        memory = "256Mi"
+      }
+    }
+  })]
+
   set = [
     {
       name  = "crds.enabled"

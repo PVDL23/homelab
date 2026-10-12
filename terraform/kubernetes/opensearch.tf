@@ -38,6 +38,19 @@ resource "helm_release" "opensearch" {
         host = "0.0.0.0"
       }
     }
+    replicaCount = 1
+    resources = {
+      requests = {
+        cpu    = "1"
+        memory = "4Gi"
+      }
+      limits = {
+        cpu    = "2"
+        memory = "8Gi"
+      }
+    }
+    jvmOptions = "-Xms2g -Xmx2g"
+    volumeSize = "20Gi"
     extraEnvs = [
       {
         name = "OPENSEARCH_INITIAL_ADMIN_PASSWORD"
@@ -60,4 +73,17 @@ resource "helm_release" "opensearch-dashboard" {
   chart      = "opensearch-dashboards"
   namespace  = kubernetes_namespace_v1.opensearch.metadata[0].name
   wait       = true
+
+  values = [yamlencode({
+    resources = {
+      requests = {
+        cpu    = "200m"
+        memory = "512Mi"
+      }
+      limits = {
+        cpu    = "500m"
+        memory = "1Gi"
+      }
+    }
+  })]
 }

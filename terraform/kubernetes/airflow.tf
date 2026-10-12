@@ -92,7 +92,49 @@ resource "helm_release" "airflow" {
         }
       }
 
+      defaultAirflowRepo = "apache/airflow"
+      defaultAirflowTag = "2.10.0"
+
+      web = {
+        replicas = 1
+        resources = {
+          requests = {
+            cpu    = "500m"
+            memory = "1Gi"
+          }
+          limits = {
+            cpu    = "2"
+            memory = "2Gi"
+          }
+        }
+      }
+
+      scheduler = {
+        replicas = 1
+        resources = {
+          requests = {
+            cpu    = "500m"
+            memory = "1Gi"
+          }
+          limits = {
+            cpu    = "2"
+            memory = "2Gi"
+          }
+        }
+      }
+
       workers = {
+        replicas = 1
+        resources = {
+          requests = {
+            cpu    = "1"
+            memory = "2Gi"
+          }
+          limits = {
+            cpu    = "4"
+            memory = "4Gi"
+          }
+        }
         extraVolumeMounts = [
           {
             name      = "airflow-data"
@@ -109,9 +151,89 @@ resource "helm_release" "airflow" {
         ]
       }
 
+      triggerer = {
+        replicas = 1
+        resources = {
+          requests = {
+            cpu    = "200m"
+            memory = "512Mi"
+          }
+          limits = {
+            cpu    = "1"
+            memory = "1Gi"
+          }
+        }
+      }
+
+      redis = {
+        enabled = true
+        resources = {
+          requests = {
+            cpu    = "200m"
+            memory = "512Mi"
+          }
+          limits = {
+            cpu    = "500m"
+            memory = "1Gi"
+          }
+        }
+      }
+
+      statsd = {
+        enabled = true
+        resources = {
+          requests = {
+            cpu    = "100m"
+            memory = "128Mi"
+          }
+          limits = {
+            cpu    = "200m"
+            memory = "256Mi"
+          }
+        }
+      }
+
       apiServer = {
         service = {
           type = "LoadBalancer"
+        }
+        resources = {
+          requests = {
+            cpu    = "500m"
+            memory = "1Gi"
+          }
+          limits = {
+            cpu    = "2"
+            memory = "2Gi"
+          }
+        }
+      }
+
+      dagProcessor = {
+        resources = {
+          requests = {
+            cpu    = "500m"
+            memory = "1Gi"
+          }
+          limits = {
+            cpu    = "2"
+            memory = "2Gi"
+          }
+        }
+      }
+
+      databaseCleanup = {
+        enabled       = true
+        retentionDays = 90
+        resources = {
+          requests = {
+            cpu    = "100m"
+            memory = "128Mi"
+          }
+          limits = {
+            cpu    = "200m"
+            memory = "256Mi"
+          }
         }
       }
     })

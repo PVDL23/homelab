@@ -31,6 +31,16 @@ resource "helm_release" "traefik" {
 
   values = [
     yamlencode({
+      resources = {
+        requests = {
+          cpu    = "200m"
+          memory = "256Mi"
+        }
+        limits = {
+          cpu    = "1"
+          memory = "512Mi"
+        }
+      }
       ports = {
         web = {
           port     = 80
