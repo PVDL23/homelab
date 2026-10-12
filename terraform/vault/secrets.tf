@@ -33,3 +33,17 @@ resource "vault_kv_secret_v2" "traefik" {
     max_versions = 5
   }
 }
+
+resource "vault_kv_secret_v2" "opensearch" {
+  mount = vault_mount.kvv2.path
+  name  = "opensearch"
+  data_json_wo = jsonencode(
+    {
+      password = var.opensearch_password
+    }
+  )
+  data_json_wo_version = 1
+  custom_metadata {
+    max_versions = 5
+  }
+}

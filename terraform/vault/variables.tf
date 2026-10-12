@@ -18,3 +18,10 @@ variable "traefik_password" {
   ephemeral   = true
   sensitive   = true
 }
+
+variable "opensearch_password" {
+  description = "Opensearch DB password"
+  type        = string
+  ephemeral   = true
+  sensitive   = true
+}
