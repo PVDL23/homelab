@@ -5,6 +5,13 @@ variable "airflow_postgres" {
   sensitive   = true
 }
 
+variable "openmetadata_postgres" {
+  description = "OpenMetaData Postgres connection string (e.g. postgresql://user:password@host:port/dbname)"
+  type        = string
+  ephemeral   = true
+  sensitive   = true
+}
+
 variable "traefik_username" {
   description = "Traefik dashboard username"
   type        = string

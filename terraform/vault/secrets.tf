@@ -5,7 +5,7 @@ resource "vault_mount" "kvv2" {
   description = "KV Version 2 secret engine mount"
 }
 
-resource "vault_kv_secret_v2" "postgres" {
+resource "vault_kv_secret_v2" "airflow" {
   mount = vault_mount.kvv2.path
   name  = "postgres-airflow"
   data_json_wo = jsonencode(
@@ -13,7 +13,21 @@ resource "vault_kv_secret_v2" "postgres" {
       connection = var.airflow_postgres
     }
   )
-  data_json_wo_version = 1
+  data_json_wo_version = 2
+  custom_metadata {
+    max_versions = 5
+  }
+}
+
+resource "vault_kv_secret_v2" "openmetadata" {
+  mount = vault_mount.kvv2.path
+  name  = "postgres-openmetadata"
+  data_json_wo = jsonencode(
+    {
+      connection = var.openmetadata_postgres
+    }
+  )
+  data_json_wo_version = 2
   custom_metadata {
     max_versions = 5
   }
