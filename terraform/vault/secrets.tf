@@ -7,10 +7,12 @@ resource "vault_mount" "kvv2" {
 
 resource "vault_kv_secret_v2" "airflow" {
   mount = vault_mount.kvv2.path
-  name  = "postgres-airflow"
+  name  = "airflow"
   data_json_wo = jsonencode(
     {
-      connection = var.airflow_postgres
+      connection           = var.airflow_postgres
+      webserver-secret-key = var.airflow_secret_key
+      fernet-key           = var.airflow_fernet_key
     }
   )
   data_json_wo_version = 2

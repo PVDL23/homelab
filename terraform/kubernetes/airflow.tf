@@ -6,7 +6,7 @@ resource "kubernetes_namespace_v1" "airflow" {
 
 ephemeral "vault_kv_secret_v2" "airflow_db" {
   mount = "kvv2"
-  name  = "postgres-airflow"
+  name  = "airflow"
 }
 
 resource "kubernetes_secret_v1" "airflow_db" {
@@ -17,6 +17,30 @@ resource "kubernetes_secret_v1" "airflow_db" {
   type = "generic"
   data_wo = {
     connection = tostring(ephemeral.vault_kv_secret_v2.airflow_db.data.connection)
+  }
+  data_wo_revision = 1
+}
+
+resource "kubernetes_secret_v1" "airflow_secret_key" {
+  metadata {
+    name      = "airflow-api-secret"
+    namespace = kubernetes_namespace_v1.airflow.metadata[0].name
+  }
+  type = "generic"
+  data_wo = {
+    webserver-secret-key = ephemeral.vault_kv_secret_v2.airflow_db.data.webserver-secret-key
+  }
+  data_wo_revision = 1
+}
+
+resource "kubernetes_secret_v1" "airflow_fernet_key" {
+  metadata {
+    name      = "airflow-fernet-key"
+    namespace = kubernetes_namespace_v1.airflow.metadata[0].name
+  }
+  type = "generic"
+  data_wo = {
+    fernet-key = ephemeral.vault_kv_secret_v2.airflow_db.data.webserver-secret-key
   }
   data_wo_revision = 1
 }
@@ -57,7 +81,19 @@ resource "helm_release" "airflow" {
       }
 
       airflow = {
-        executor = "CeleryExecutor"
+        executor               = "CeleryExecutor"
+        apiSecretKeySecretName = kubernetes_secret_v1.airflow_secret_key.metadata[0].name
+        extraEnv = [
+          {
+            name = "AIRFLOW__CORE__FERNET_KEY"
+            valueFrom = {
+              secretKeyRef = {
+                name = kubernetes_secret_v1.airflow_fernet_key.metadata[0].name
+                key  = "fernet-key"
+              }
+            }
+          }
+        ]
       }
 
       postgresql = {

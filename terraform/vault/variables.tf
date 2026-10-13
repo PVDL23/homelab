@@ -32,3 +32,17 @@ variable "opensearch_password" {
   ephemeral   = true
   sensitive   = true
 }
+
+variable "airflow_secret_key" {
+  description = "Airflow static API key"
+  type        = string
+  ephemeral   = true
+  sensitive   = true
+}
+
+variable "airflow_fernet_key" {
+  description = "Airflow fernet key"
+  type        = string
+  ephemeral   = true
+  sensitive   = true
+}
