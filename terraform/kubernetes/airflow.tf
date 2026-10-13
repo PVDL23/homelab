@@ -9,6 +9,11 @@ ephemeral "vault_kv_secret_v2" "airflow_db" {
   name  = "airflow"
 }
 
+ephemeral "vault_kv_secret_v2" "inat-s3-credentials" {
+  mount = "kvv2"
+  name  = "scaleway"
+}
+
 resource "kubernetes_secret_v1" "airflow_db" {
   metadata {
     name      = "airflow-postgres"
@@ -40,11 +45,23 @@ resource "kubernetes_secret_v1" "airflow_fernet_key" {
   }
   type = "generic"
   data_wo = {
-    fernet-key = ephemeral.vault_kv_secret_v2.airflow_db.data.webserver-secret-key
+    fernet-key = ephemeral.vault_kv_secret_v2.airflow_db.data.fernet-key
   }
   data_wo_revision = 1
 }
 
+resource "kubernetes_secret_v1" "inat-s3-credentials" {
+  metadata {
+    name      = "inat-s3-credentials"
+    namespace = kubernetes_namespace_v1.airflow.metadata[0].name
+  }
+  type = "generic"
+  data_wo = {
+    SCW_ACCESS_KEY = ephemeral.vault_kv_secret_v2.inat-s3-credentials.data.scw_access_key
+    SCW_SECRET_KEY = ephemeral.vault_kv_secret_v2.inat-s3-credentials.data.scw_secret_key
+  }
+  data_wo_revision = 1
+}
 
 resource "kubernetes_persistent_volume_claim_v1" "airflow" {
   metadata {
@@ -75,25 +92,16 @@ resource "helm_release" "airflow" {
       images = {
         airflow = {
           repository = "rg.nl-ams.scw.cloud/data-engineering-cr/airflow-dags"
-          tag        = "251010"
+          tag        = "251013-4"
           pullPolicy = "IfNotPresent"
+          # pullPolicy = "Always"
         }
       }
 
       airflow = {
         executor               = "CeleryExecutor"
         apiSecretKeySecretName = kubernetes_secret_v1.airflow_secret_key.metadata[0].name
-        extraEnv = [
-          {
-            name = "AIRFLOW__CORE__FERNET_KEY"
-            valueFrom = {
-              secretKeyRef = {
-                name = kubernetes_secret_v1.airflow_fernet_key.metadata[0].name
-                key  = "fernet-key"
-              }
-            }
-          }
-        ]
+        fernetKeySecretName    = kubernetes_secret_v1.airflow_fernet_key.metadata[0].name
       }
 
       postgresql = {
