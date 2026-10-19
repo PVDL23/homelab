@@ -92,9 +92,9 @@ resource "helm_release" "airflow" {
       images = {
         airflow = {
           repository = "rg.nl-ams.scw.cloud/data-engineering-cr/airflow-dags"
-          tag        = "251013-4"
-          pullPolicy = "IfNotPresent"
-          # pullPolicy = "Always"
+          tag        = "251017"
+          # pullPolicy = "IfNotPresent"
+          pullPolicy = "Always"
         }
       }
 
