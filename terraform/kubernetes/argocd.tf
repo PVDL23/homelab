@@ -13,6 +13,11 @@ resource "helm_release" "argocd" {
   wait       = true
 
   values = [yamlencode({
+    configs = {
+      params = {
+        "server.insecure" = true
+      }
+    }
     extraObjects = [{
       apiVersion = "argoproj.io/v1alpha1"
       kind       = "Application"
