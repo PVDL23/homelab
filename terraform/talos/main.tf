@@ -1,6 +1,6 @@
 locals {
   kubernetes_version = "v1.37.1"
-  talos_version      = "v1.14.2"
+  talos_version      = "v1.14.5"
   gateway            = "10.23.2.1"
   network_prefix     = 24
 
